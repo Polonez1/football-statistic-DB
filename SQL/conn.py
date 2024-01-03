@@ -1,0 +1,9 @@
+ssh_host = "ssh.pythonanywhere.com"
+ssh_username = "Polonez"
+ssh_password = "Lacosanostra1#"
+remote_bind_address = ("Polonez.mysql.pythonanywhere-services.com", 3306)
+host = "127.0.0.1"
+database = "Polonez$default"
+user = "Polonez"
+password = "lacosanostra"
+connect_type = "MySQL"
