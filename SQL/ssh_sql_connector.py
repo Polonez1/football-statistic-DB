@@ -61,5 +61,13 @@ def data_loader(name: str, df: pd.DataFrame, truncate: bool = True):
     )
 
 
+def get_standings_data_from_sql():
+    with open("./data_load/SQL_queries.sql/standings_data.sql", "r") as file:
+        query = file.read()
+    df = sql.get_data_from_query(query=query)
+    standings_dict = df.to_dict(orient="records")
+    return standings_dict
+
+
 if "__main__" == __name__:
     pass
