@@ -1,49 +1,65 @@
 import src.pysql.pySQL as sqlconn
-import conn
+import SQL.conn as conn
+import pandas as pd
+from datetime import datetime
 
 
-class DataLoad(sqlconn.SQL):
-    def __init__(self, connect_type, **kwargs):
-        super().__init__(connect_type, **kwargs)
+ssh = sqlconn.SSHtunnel(
+    ssh_host=conn.ssh_host,
+    ssh_username=conn.ssh_username,
+    ssh_password=conn.ssh_password,
+    remote_bind_address=conn.remote_bind_address,
+)
+tunnel = ssh.create_tunnel()
+tunnel.start()
+sql = sqlconn.SQL(
+    host=conn.host,
+    database=conn.database,
+    user=conn.user,
+    password=conn.password,
+    port=tunnel.local_bind_port,
+    connect_type="MySQL",
+)
 
-    def create_ssh_sql_conncector(self):
-        ssh = sqlconn.SSHtunnel(
-            ssh_host=conn.ssh_host,
-            ssh_username=conn.ssh_username,
-            ssh_password=conn.ssh_password,
-            remote_bind_address=conn.remote_bind_address,
+
+def load_log_table(
+    table_name: str, table_shape: pd.DataFrame.shape, success: bool, error: str = None
+):
+    name: str = "data_log"
+    if success:
+        result = "succes"
+    else:
+        result = "failed"
+    df = pd.DataFrame(
+        {
+            "table_name": [table_name],
+            "updated_at": [datetime.now()],
+            "table_shape": [str(table_shape)],
+            "result": [result],
+            "error": [error],
+        }
+    )
+    sql.load_data_to_SQL(df=df, table=name)
+    tunnel.close()
+
+
+def data_loader(name: str, df: pd.DataFrame, truncate: bool = True):
+    try:
+        sql.load_data_to_SQL(
+            df=df,
+            table=name,
+            truncate=truncate,
         )
-        tunnel = ssh.create_tunnel()
-        tunnel.start()
-        sql = sqlconn.SQL(
-            host=conn.host,
-            database=conn.database,
-            user=conn.user,
-            password=conn.password,
-            port=tunnel.local_bind_port,
-            connect_type="MySQL",
-        )
-        return sql
-
-    def select_data_from_DB(self, query: str):
-        df = self.get_data_from_query(query=query)
-        return df
+        success = True
+        error_message = None
+    except Exception as e:
+        success = False
+        error_message = str(e)
+        print(f"\033[91m {error_message} \033[0m")
+    load_log_table(
+        table_name=name, table_shape=df.shape, success=success, error=error_message
+    )
 
 
 if "__main__" == __name__:
-    ssh = sqlconn.SSHtunnel(
-        ssh_host=conn.ssh_host,
-        ssh_username=conn.ssh_username,
-        ssh_password=conn.ssh_password,
-        remote_bind_address=conn.remote_bind_address,
-    )
-    tunnel = ssh.create_tunnel()
-    tunnel.start()
-    sql = sqlconn.SQL(
-        host=conn.host,
-        database=conn.database,
-        user=conn.user,
-        password=conn.password,
-        port=tunnel.local_bind_port,
-        connect_type="MySQL",
-    )
+    pass
