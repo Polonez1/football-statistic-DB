@@ -61,12 +61,47 @@ def data_loader(name: str, df: pd.DataFrame, truncate: bool = True):
     )
 
 
+def __delete_last_coma(element_list: list):
+    if len(element_list) > 1:
+        return str(tuple(element_list))
+    string = str(tuple(element_list))
+    last_comma_index = string.rfind(",")
+    if last_comma_index != -1:
+        modified_string = string[:last_comma_index] + string[last_comma_index + 1 :]
+        return modified_string
+
+
 def get_standings_data_from_sql():
-    with open("./data_load/SQL_queries.sql/standings_data.sql", "r") as file:
+    with open(".\SQL_queries.sql\standings_data.sql", "r") as file:
         query = file.read()
     df = sql.get_data_from_query(query=query)
     standings_dict = df.to_dict(orient="records")
     return standings_dict
+
+
+def get_leagues_id_list(tracked_football_countries, tracked_football_leagues):
+    with open(".\SQL_queries.sql\leagues_list.sql", "r") as file:
+        query = file.read()
+    params = {
+        "countries": __delete_last_coma(tracked_football_countries),
+        "leagues": __delete_last_coma(tracked_football_leagues),
+    }
+    df = sql.get_data_from_query(query=query, params=params)
+    leagues_id_list = list(df["id"])
+
+    return leagues_id_list
+
+
+def get_fixtures_id_list(tracked_football_leagues, tracked_football_seasons):
+    with open(".\SQL_queries.sql\fixtures_list.sql", "r") as file:
+        query = file.read()
+    params = {
+        "leagues": __delete_last_coma(tracked_football_leagues),
+        "season": __delete_last_coma(tracked_football_seasons),
+    }
+    df = sql.get_data_from_query(query=query, params=params)
+    fixture_id_list = list(df["fixture_id"])
+    return fixture_id_list
 
 
 if "__main__" == __name__:

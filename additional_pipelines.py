@@ -134,3 +134,240 @@ def teams_stats_data(standings_dict: dict):
         "stats_standings_cards": pd.concat(full_stats_standings_cards),
     }
     return data_dict
+
+
+def __get_fixtures_data(season: str, league_id: int):
+    json_obj = API.get_fixtures_data(season=season, league_id=league_id)
+    df = transform.fixtures_data_processing(json_obj=json_obj)
+    return df
+
+
+def fixtures_data(season_list: list, league_list: list) -> pd.DataFrame:
+    """Current data updated every day
+
+    Args:
+        season_list (list): seasons list
+        league_list (list): league_list by league id
+
+    Returns:
+        pd.DataFrame: fixtures data
+    """
+    name: str = "fixtures"
+    full_data = []
+    request_couter = 1
+    for season in season_list:
+        for league_id in league_list:
+            print(request_couter, end="\r")
+            dff = __get_fixtures_data(season=season, league_id=league_id)
+            full_data.append(dff)
+            request_couter += 1
+            if request_couter % 300 == 0:
+                time.sleep(60)
+                print("Request limit 300: sleep 60s")
+    df = pd.concat(full_data)
+    return df
+
+
+def __get_fixtures_event_data(fixture_id: int) -> pd.DataFrame:
+    json_obj = APIrequest.get_event_data(fixture_id=fixture_id)
+    df = transform.fixtures_event_data_processing(json_obj=json_obj)
+    return df
+
+
+def fixtures_event_data(fixtures_list: list) -> pd.DataFrame:
+    """Current data updated after matches
+
+    Args:
+        fixtures_list (list): fixtures list by fixture_id
+
+    Returns:
+        pd.DataFrame: fixture event data
+    """
+    name: str = "fixtures_event"
+    full_data = []
+    counter = 1
+    for fixture_id in fixtures_list:
+        dff = __get_fixtures_event_data(fixture_id=fixture_id)
+        print(counter, end="\r")
+        full_data.append(dff)
+        counter += 1
+        if counter % 300 == 0:
+            print(f"limited request {counter}: sleep 60s")
+            time.sleep(60)
+
+    df = pd.concat(full_data)
+
+    return df
+
+
+def __get_fixtures_stats_data(fixture_id: int) -> pd.DataFrame:
+    json_obj = APIrequest.get_fixture_stat_data(fixture_id=fixture_id)
+    df = transform.fixtures_stats_data_processing(json_obj=json_obj)
+    return df
+
+
+def fixtures_stats_data(fixtures_list: list) -> pd.DataFrame:
+    """Current data updated after matches
+
+    Args:
+        fixtures_list (list): fixtures list by id
+
+    Returns:
+        pd.DataFrame: fixtures stats data
+    """
+    name: str = "fixtures_stats"
+    full_data = []
+    counter = 1
+    c = 0
+    for fixture_id in fixtures_list:
+        dff = __get_fixtures_stats_data(fixture_id=fixture_id)
+        print(counter, end="\r")
+        full_data.append(dff)
+        counter += 1
+        c += 1
+        if counter % 300 == 0:
+            print(f"limited request {counter}: sleep 60s")
+            time.sleep(60)
+    df = pd.concat(full_data)
+    return df
+
+
+def __get_player_by_fixture_id(fixture_id: int):
+    json_obj = APIrequest.player_by_fixture_id(fixture_id=fixture_id)
+    df = transform.player_by_fixtures_data_processing(json_obj=json_obj)
+    return df
+
+
+def player_by_fixture_data(fixtures_list: list) -> pd.DataFrame:
+    """Current data updated after match
+
+    Args:
+        fixtures_list (list): fixtures list by id
+
+    Returns:
+        pd.DataFrame: players statistic in match
+    """
+    name: str = "player_fixture"
+    full_data = []
+    counter = 1
+    for fixture_id in fixtures_list:
+        dff = __get_player_by_fixture_id(fixture_id=fixture_id)
+        print(counter, end="\r")
+        full_data.append(dff)
+        counter += 1
+        if counter % 300 == 0:
+            print(f"limited request {counter}: sleep 60s")
+            time.sleep(60)
+    df = pd.concat(full_data)
+    return df
+
+
+def __get_team_squad(team_id: int):
+    json_obj = APIrequest.get_team_squad(team_id=team_id)
+    df = transform.team_squad_data_processing(json_obj=json_obj)
+    return df
+
+
+def team_squad_data(team_list: list):
+    """Updated every season
+
+    Args:
+        team_list (list): team list by id
+
+    Returns:
+        _type_: team current season squad
+    """
+    name: str = "squad"
+    full_data = []
+    for team_id in team_list:
+        dff = __get_team_squad(team_id=team_id)
+        full_data.append(dff)
+    df = pd.concat(full_data)
+    return df
+
+
+def __get_lineups(fixture_id: int) -> pd.DataFrame:
+    json_obj = APIrequest.get_lineups(fixture_id=fixture_id)
+    general_df, lineups_data = transform.lineups_data_processing(json_obj=json_obj)
+    return general_df, lineups_data
+
+
+def lineups_data(fixtures_list: list):
+    name: str = "lineups"
+    name_general: str = "lineups_info"
+    name_additional: str = "lineups"
+
+    general_data = []
+    additional_data = []
+    counter = 1
+    for fixture_id in fixtures_list:
+        general_df, additional_df = __get_lineups(fixture_id=fixture_id)
+        print(counter, end="\r")
+        general_data.append(general_df)
+        additional_data.append(additional_df)
+        counter += 1
+        if counter % 300 == 0:
+            print(f"limited request {counter}: sleep 60s")
+            time.sleep(60)
+
+    gen_df = pd.concat(general_data)
+    addt_df = pd.concat(additional_data)
+    return gen_df, addt_df
+
+
+def __get_injuries_by_team(team_id: int, season: str) -> pd.DataFrame:
+    json_obj = APIrequest.injuries_by_team(team_id=team_id, season=season)
+    df = transform.injuries_by_team_data_processing(json_obj=json_obj)
+    return df
+
+
+@log.tables_load_info
+def injuries_by_team_data(teams_list: list, season_list: list) -> pd.DataFrame:
+    """Current data updated before every round
+
+    Args:
+        teams_list (list): teams list by id
+
+    Returns:
+        pd.DataFrame: injuries by team
+    """
+    name: str = "injuries_team"
+    full_data = []
+    for season in season_list:
+        for team_id in teams_list:
+            dff = __get_injuries_by_team(team_id=team_id, season=season_list)
+            dff["season"] = season
+            full_data.append(dff)
+    df = pd.concat(full_data)
+    return df
+
+
+def __get_injuries_by_fixture(fixture_id: int) -> pd.DataFrame:
+    json_obj = APIrequest.injuries_by_fixtures(fixture_id=fixture_id)
+    df = transform.injuries_by_fixtures_data_processing(json_obj=json_obj)
+    return df
+
+
+def injuries_by_fixture_data(fixtures_list: list) -> pd.DataFrame:
+    """Current data updated before every round
+
+    Args:
+        teams_list (list): teams list by id
+
+    Returns:
+        pd.DataFrame: injuries by fixtures
+    """
+    name: str = "injuries_fixtures"
+    full_data = []
+    counter = 1
+    for fixture_id in fixtures_list:
+        dff = __get_injuries_by_fixture(fixture_id=fixture_id)
+        print(counter, end="\r")
+        full_data.append(dff)
+        counter += 1
+        if counter % 300 == 0:
+            print(f"limited request {counter}: sleep 60s")
+            time.sleep(60)
+
+    df = pd.concat(full_data)
+    return df
