@@ -11,6 +11,11 @@ def seasonal_data_update():
     teams = seasonal.update_teams_data()
 
 
+def update_teams():
+    t = SeasonalData()
+    teams = t.update_teams_data()
+
+
 def historical_data_load():
     historical = HistoricalData()
     standings = historical.load_standings_data()

@@ -2,4 +2,3 @@ requests
 pandas
 -e git+https://github.com/Polonez1/SQL-Data-Load.git#egg=pySQL
 click
-apache-airflow
