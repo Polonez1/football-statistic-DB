@@ -7,8 +7,6 @@ __pycache__/
 *.so
 
 # Distribution / packaging
-endpoints.py
-APIkeys.py
 conn.py
 .Python
 build/
