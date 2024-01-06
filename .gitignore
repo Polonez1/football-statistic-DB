@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.so
 
-# Distribution / packaging
+# Distribution / packagi
 endpoints.py
 APIkeys.py
 conn.py
@@ -17,7 +17,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+lib/c
 lib64/
 parts/
 sdist/
