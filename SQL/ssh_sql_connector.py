@@ -40,7 +40,6 @@ def load_log_table(
         }
     )
     sql.load_data_to_SQL(df=df, table=name)
-    tunnel.close()
 
 
 def data_loader(name: str, df: pd.DataFrame, truncate: bool = True):
@@ -72,7 +71,7 @@ def __delete_last_coma(element_list: list):
 
 
 def get_standings_data_from_sql():
-    with open(".\SQL_queries.sql\standings_data.sql", "r") as file:
+    with open("./SQL/SQL_queries.sql/standings_data.sql", "r") as file:
         query = file.read()
     df = sql.get_data_from_query(query=query)
     standings_dict = df.to_dict(orient="records")
@@ -80,7 +79,7 @@ def get_standings_data_from_sql():
 
 
 def get_leagues_id_list(tracked_football_countries, tracked_football_leagues):
-    with open(".\SQL_queries.sql\leagues_list.sql", "r") as file:
+    with open("./SQL/SQL_queries.sql/leagues_list.sql", "r") as file:
         query = file.read()
     params = {
         "countries": __delete_last_coma(tracked_football_countries),
@@ -93,7 +92,7 @@ def get_leagues_id_list(tracked_football_countries, tracked_football_leagues):
 
 
 def get_fixtures_id_list(tracked_football_leagues, tracked_football_seasons):
-    with open(".\SQL_queries.sql\fixtures_list.sql", "r") as file:
+    with open("./SQL/SQL_queries.sql/fixtures_list.sql", "r") as file:
         query = file.read()
     params = {
         "leagues": __delete_last_coma(tracked_football_leagues),
@@ -102,6 +101,18 @@ def get_fixtures_id_list(tracked_football_leagues, tracked_football_seasons):
     df = sql.get_data_from_query(query=query, params=params)
     fixture_id_list = list(df["fixture_id"])
     return fixture_id_list
+
+
+def standings_data_delete(name: str, current_season: int):
+    sql.read_query(query=f"""DELETE FROM {name} WHERE season = {current_season};""")
+
+    return None
+
+
+def data_delete_by_stats_id(name: str, stats_id: tuple):
+    sql.read_query(query=f"""DELETE FROM {name} WHERE stats_id in {stats_id};""")
+
+    return None
 
 
 if "__main__" == __name__:

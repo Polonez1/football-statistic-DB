@@ -137,7 +137,7 @@ def teams_stats_data(standings_dict: dict):
 
 
 def __get_fixtures_data(season: str, league_id: int):
-    json_obj = API.get_fixtures_data(season=season, league_id=league_id)
+    json_obj = APIrequest.get_fixtures_data(season=season, league_id=league_id)
     df = transform.fixtures_data_processing(json_obj=json_obj)
     return df
 
@@ -321,7 +321,6 @@ def __get_injuries_by_team(team_id: int, season: str) -> pd.DataFrame:
     return df
 
 
-@log.tables_load_info
 def injuries_by_team_data(teams_list: list, season_list: list) -> pd.DataFrame:
     """Current data updated before every round
 

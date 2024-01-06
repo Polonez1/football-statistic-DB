@@ -14,7 +14,7 @@ import pandas as pd
 class SeasonalData:
     def __init__(self):
         self.season = None
-        self.country_list = config.TRACKED_FOOTBALL_COUNTRIES
+        self.country_list: list = config.TRACKED_FOOTBALL_COUNTRIES
 
     @log.tables_load_info
     def update_countries_data(self):
@@ -65,11 +65,14 @@ class SeasonalData:
         general_leagues, additional_leagues = transform.leagues_data_processing(
             json_obj=json_obj
         )
+        general_leagues = add_data.add_updated_at_col(df=general_leagues)
         SQL.data_loader(
             name=name_fact_table,
             df=general_leagues[reordered_col.leagues_info_col],
             truncate=False,
         )
+
+        additional_leagues = add_data.add_updated_at_col(df=additional_leagues)
         SQL.data_loader(
             name=name_additional_table,
             df=additional_leagues[reordered_col.leagues_additional_col],
@@ -98,7 +101,7 @@ class SeasonalData:
         return df
 
     @log.tables_load_info
-    def update_teams_data(self):
+    def update_teams_data(self, truncate: bool = True):
         """Updated every season. Load teams data
 
         Args:
@@ -112,21 +115,26 @@ class SeasonalData:
         df = additional_pipelines.teams_data(country_list=self.country_list)
         df = add_data.add_updated_at_col(df=df)
         df = df[reordered_col.teams_col]
-        SQL.data_loader(name=name, df=df, truncate=False)
+        SQL.data_loader(name=name, df=df, truncate=truncate)
         return df
 
 
 class HistoricalData:
     def __init__(self):
-        self.season = config.TRACKED_HISTORICAL_SEASONS
-        self.country_list = config.TRACKED_FOOTBALL_COUNTRIES
-        # self.leagues_list = data.get_leagues_id_list()
-        # self.fixtures_list = data.get_fixtures_id_list()
+        self.season: list = config.TRACKED_HISTORICAL_SEASONS
+        self.country_list: list = config.TRACKED_FOOTBALL_COUNTRIES
+        self.leagues_list: list = config.TRACKED_FOOTBALL_LEAGUES
 
     @log.tables_load_info
     def load_standings_data(self):
         name: str = "standings"
-        df = additional_pipelines.standings_data(country_list=self.country_list)
+        league_list = SQL.get_leagues_id_list(
+            tracked_football_countries=config.TRACKED_FOOTBALL_COUNTRIES,
+            tracked_football_leagues=config.TRACKED_FOOTBALL_LEAGUES,
+        )
+        df = additional_pipelines.standings_data(
+            season_list=self.season, league_list=league_list
+        )
         df = add_data.add_updated_at_col(df=df)
         df = df[reordered_col.standings_col]
         SQL.data_loader(name=name, df=df, truncate=False)
@@ -169,7 +177,10 @@ class HistoricalData:
     @log.tables_load_info
     def load_fixtures_event_data(self):
         name: str = "fixtures_event"
-        fixtures_list = SQL.get_fixtures_id_list()
+        fixtures_list = SQL.get_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
         df = additional_pipelines.fixtures_event_data(fixtures_list=fixtures_list)
         df = add_data.add_updated_at_col(df=df)
         df = df[reordered_col.fixtures_event_col]
@@ -180,7 +191,10 @@ class HistoricalData:
     @log.tables_load_info
     def load_fixtures_stats_data(self):
         name: str = "fixtures_stats"
-        fixtures_list = SQL.get_fixtures_id_list()
+        fixtures_list = SQL.get_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
         df = additional_pipelines.fixtures_stats_data(fixtures_list=fixtures_list)
         df = add_data.add_updated_at_col(df=df)
         df = df[reordered_col.fixtures_stats_col]
@@ -190,7 +204,10 @@ class HistoricalData:
     @log.tables_load_info
     def load_player_by_fixture_data(self):
         name: str = "player_fixture"
-        fixtures_list = SQL.get_fixtures_id_list()
+        fixtures_list = SQL.get_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
         df = additional_pipelines.player_by_fixture_data(fixtures_list=fixtures_list)
         df = add_data.add_updated_at_col(df=df)
         df = df[reordered_col.player_fixture_col]
@@ -202,15 +219,18 @@ class HistoricalData:
     def load_lineups_data(self):
         name_general: str = "lineups_info"
         name_additional: str = "lineups"
-        fixtures_list = SQL.get_fixtures_id_list()
+        fixtures_list = SQL.get_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
         lineups, lineups_info = additional_pipelines.lineups_data(
             fixtures_list=fixtures_list
         )
-        lineups = lineups[reordered_col.lineups_info_col]
         lineups = add_data.add_updated_at_col(df=lineups)
+        lineups = lineups[reordered_col.lineups_info_col]
 
-        lineups_info = lineups_info[reordered_col.lineups_col]
         lineups_info = add_data.add_updated_at_col(df=lineups_info)
+        lineups_info = lineups_info[reordered_col.lineups_col]
 
         SQL.data_loader(name=name_general, df=lineups, truncate=False)
         SQL.data_loader(name=name_additional, df=lineups_info, truncate=False)
@@ -219,14 +239,67 @@ class HistoricalData:
 
     def load_injuries_by_fixtures(self):
         name: str = "injuries_fixtures"
-        fixtures_list = SQL.get_fixtures_id_list()
+        fixtures_list = SQL.get_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
         df = additional_pipelines.injuries_by_fixture_data(fixtures_list=fixtures_list)
+        df = add_data.add_updated_at_col(df=df)
         df = df[reordered_col.injuries_fixtures_col]
         SQL.data_loader(name=name, df=df, truncate=False)
 
         return df
 
 
-if "__main__" == __name__:
-    seasonal = SeasonalData()
-    df = seasonal.update_seasons_data()
+class CurrentData:
+    def __init__(self):
+        self.season = config.TRACKED_CURRENT_SEASON
+        self.country_list = config.TRACKED_FOOTBALL_COUNTRIES
+
+    @log.tables_load_info
+    def update_current_standings_data(self):
+        name: str = "standings"
+        league_list = SQL.get_leagues_id_list(
+            tracked_football_countries=config.TRACKED_FOOTBALL_COUNTRIES,
+            tracked_football_leagues=config.TRACKED_FOOTBALL_LEAGUES,
+        )
+        df = additional_pipelines.standings_data(
+            season_list=self.season, league_list=league_list
+        )
+        df = add_data.add_updated_at_col(df=df)
+        df = df[reordered_col.standings_col]
+        SQL.standings_data_delete(name=name, current_season=self.season[0])
+        SQL.data_loader(name=name, df=df, truncate=False)
+        return df
+
+    @log.tables_load_info
+    def update_current_teams_statistic_data(self):
+        standings_dict = SQL.get_standings_data_from_sql()
+        data_dict = additional_pipelines.teams_stats_data(standings_dict=standings_dict)
+        stats_standings_col = reordered_col.stats_standings_col_dict
+
+        for name in data_dict.keys():
+            df = data_dict[name]
+            stats_id = list(df["stats_id"])
+            stats_id_to_query = str(tuple(stats_id))
+            SQL.data_delete_by_stats_id(name=name, stats_id=stats_id_to_query)
+            df = add_data.add_updated_at_col(df=df)
+            SQL.data_loader(
+                name=name,
+                df=df[stats_standings_col[name]],
+                truncate=False,
+            )
+
+        return (
+            data_dict["stats_standings"],
+            data_dict["stats_standings_fixtures"],
+            data_dict["stats_standings_goals"],
+            data_dict["stats_standings_records"],
+            data_dict["stats_standings_lineups"],
+            data_dict["stats_standings_cards"],
+        )
+
+
+# if "__main__" == __name__:
+#    seasonal = SeasonalData()
+#    df = seasonal.update_seasons_data()
