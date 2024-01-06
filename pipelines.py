@@ -255,6 +255,7 @@ class CurrentData:
     def __init__(self):
         self.season = config.TRACKED_CURRENT_SEASON
         self.country_list = config.TRACKED_FOOTBALL_COUNTRIES
+        self.leagues_list = config.TRACKED_FOOTBALL_LEAGUES
 
     @log.tables_load_info
     def update_current_standings_data(self):
@@ -298,6 +299,138 @@ class CurrentData:
             data_dict["stats_standings_lineups"],
             data_dict["stats_standings_cards"],
         )
+
+    @log.tables_load_info
+    def update_current_fixtures_data(self):
+        name: str = "fixtures"
+        league_list = SQL.get_leagues_id_list(
+            tracked_football_countries=config.TRACKED_FOOTBALL_COUNTRIES,
+            tracked_football_leagues=config.TRACKED_FOOTBALL_LEAGUES,
+        )
+
+        df = additional_pipelines.fixtures_data(
+            season_list=self.season, league_list=league_list
+        )
+        df = add_data.add_updated_at_col(df=df)
+        df = df[reordered_col.fixtures_col]
+        SQL.data_delete_current_fixtures(name=name, current_season=self.season[0])
+        SQL.data_loader(name=name, df=df, truncate=False)
+
+        return df
+
+    @log.tables_load_info
+    def update_current_fixtures_event_data(self):
+        name: str = "fixtures_event"
+        fixtures_list = SQL.get_current_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
+        fixture_id_to_query = str(tuple(fixtures_list))
+        df = additional_pipelines.fixtures_event_data(fixtures_list=fixtures_list)
+        SQL.data_delete_by_fixtures_id(name=name, fixture_id=fixture_id_to_query)
+        df = add_data.add_updated_at_col(df=df)
+        df = df[reordered_col.fixtures_event_col]
+        SQL.data_loader(name=name, df=df, truncate=False)
+
+        return df
+
+    @log.tables_load_info
+    def update_current_fixtures_stats_data(self):
+        name: str = "fixtures_stats"
+        fixtures_list = SQL.get_current_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
+        fixture_id_to_query = str(tuple(fixtures_list))
+        SQL.data_delete_by_fixtures_id(name=name, fixture_id=fixture_id_to_query)
+        df = additional_pipelines.fixtures_stats_data(fixtures_list=fixtures_list)
+        df = add_data.add_updated_at_col(df=df)
+        df = df[reordered_col.fixtures_stats_col]
+        SQL.data_loader(name=name, df=df, truncate=False)
+
+        return df
+
+    @log.tables_load_info
+    def load_player_by_fixture_data(self):
+        name: str = "player_fixture"
+        fixtures_list = SQL.get_current_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
+        fixture_id_to_query = str(tuple(fixtures_list))
+        SQL.data_delete_by_fixtures_id(name=name, fixture_id=fixture_id_to_query)
+        df = additional_pipelines.player_by_fixture_data(fixtures_list=fixtures_list)
+        df = add_data.add_updated_at_col(df=df)
+        df = df[reordered_col.player_fixture_col]
+        SQL.data_loader(name=name, df=df, truncate=False)
+
+        return df
+
+    @log.tables_load_info
+    def update_current_squad_data(self):
+        name: str = "squad"
+        standings_dict = SQL.get_current_standings_data(tracked_season=self.season)
+        team_list = [i["team_id"] for i in standings_dict]
+        df = additional_pipelines.team_squad_data(team_list=team_list)
+        df = add_data.add_updated_at_col(df=df)
+        df = df[reordered_col.squad_col]
+        SQL.data_loader(name=name, df=df, truncate=False)
+        return df
+
+    @log.tables_load_info
+    def update_current_lineups_data(self):
+        name_general: str = "lineups_info"
+        name_additional: str = "lineups"
+        fixtures_list = SQL.get_current_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
+        fixture_id_to_query = str(tuple(fixtures_list))
+        SQL.data_delete_by_fixtures_id(
+            name=name_general, fixture_id=fixture_id_to_query
+        )
+        SQL.data_delete_by_fixtures_id(
+            name=name_additional, fixture_id=fixture_id_to_query
+        )
+        lineups, lineups_info = additional_pipelines.lineups_data(
+            fixtures_list=fixtures_list
+        )
+
+        lineups = add_data.add_updated_at_col(df=lineups)
+        lineups = lineups[reordered_col.lineups_info_col]
+
+        lineups_info = add_data.add_updated_at_col(df=lineups_info)
+        lineups_info = lineups_info[reordered_col.lineups_col]
+
+        SQL.data_loader(
+            name=name_general,
+            df=lineups,
+            truncate=False,
+        )
+        SQL.data_loader(
+            name=name_additional,
+            df=lineups_info,
+            truncate=False,
+        )
+
+        return lineups, lineups_info
+
+    @log.tables_load_info
+    def load_injuries_by_fixtures(self):
+        name: str = "injuries_fixtures"
+        fixtures_list = SQL.get_current_fixtures_id_list(
+            tracked_football_leagues=self.leagues_list,
+            tracked_football_seasons=self.season,
+        )
+        fixture_id_to_query = str(tuple(fixtures_list))
+        SQL.data_delete_by_fixtures_id(name=name, fixture_id=fixture_id_to_query)
+        df = additional_pipelines.injuries_by_fixture_data(fixtures_list=fixtures_list)
+        df = add_data.add_updated_at_col(df=df)
+        df = df[reordered_col.injuries_fixtures_col]
+
+        SQL.data_loader(name=name, df=df, truncate=False)
+
+        return df
 
 
 # if "__main__" == __name__:

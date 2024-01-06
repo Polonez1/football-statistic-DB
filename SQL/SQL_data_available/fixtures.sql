@@ -5,3 +5,6 @@ select league_country,
     count(distinct(teams_home_id)) as 'home_teams_count',
     count(distinct(teams_away_id)) as 'away_teams_count'
 from fixtures f
+group by league_country,
+    league_name,
+    league_season

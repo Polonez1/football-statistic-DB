@@ -103,6 +103,27 @@ def get_fixtures_id_list(tracked_football_leagues, tracked_football_seasons):
     return fixture_id_list
 
 
+def get_current_fixtures_id_list(tracked_football_leagues, tracked_football_seasons):
+    with open("./SQL/SQL_queries.sql/current_fixtures_list.sql", "r") as file:
+        query = file.read()
+    params = {
+        "leagues": __delete_last_coma(tracked_football_leagues),
+        "season": __delete_last_coma(tracked_football_seasons),
+    }
+    df = sql.get_data_from_query(query=query, params=params)
+    fixture_id_list = list(df["fixture_id"])
+    return fixture_id_list
+
+
+def get_current_standings_data(tracked_season):
+    with open("./SQL/SQL_queries.sql/current_standings_data.sql", "r") as file:
+        query = file.read()
+    params = {"season": __delete_last_coma(tracked_season)}
+    df = sql.get_data_from_query(query=query, params=params)
+    standings_dict = df.to_dict(orient="records")
+    return standings_dict
+
+
 def standings_data_delete(name: str, current_season: int):
     sql.read_query(query=f"""DELETE FROM {name} WHERE season = {current_season};""")
 
@@ -111,6 +132,20 @@ def standings_data_delete(name: str, current_season: int):
 
 def data_delete_by_stats_id(name: str, stats_id: tuple):
     sql.read_query(query=f"""DELETE FROM {name} WHERE stats_id in {stats_id};""")
+
+    return None
+
+
+def data_delete_current_fixtures(name: str, current_season: int):
+    sql.read_query(
+        query=f"""DELETE FROM {name} WHERE league_season = {current_season};"""
+    )
+
+    return None
+
+
+def data_delete_by_fixtures_id(name: str, fixture_id: tuple):
+    sql.read_query(query=f"""DELETE FROM {name} WHERE fixture_id in {fixture_id};""")
 
     return None
 
