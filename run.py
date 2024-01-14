@@ -20,4 +20,4 @@ def current_data():
 
 
 if __name__ == "__main__":
-    seasonal_data()
+    historical_data()

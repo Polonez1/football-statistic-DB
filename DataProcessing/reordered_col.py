@@ -355,7 +355,7 @@ fixtures_stats_col = [
     "Passes %",
     "fixtures_stats_team_id",
     "fixture_id",
-    "expected_goals",
+    # "expected_goals",
     "source",
     "created_by",
     "updated_at",
