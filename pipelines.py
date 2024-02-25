@@ -69,14 +69,14 @@ class SeasonalData:
         SQL.data_loader(
             name=name_fact_table,
             df=general_leagues[reordered_col.leagues_info_col],
-            truncate=False,
+            truncate=True,
         )
 
         additional_leagues = add_data.add_updated_at_col(df=additional_leagues)
         SQL.data_loader(
             name=name_additional_table,
             df=additional_leagues[reordered_col.leagues_additional_col],
-            truncate=False,
+            truncate=True,
         )
         return general_leagues, additional_leagues
 
@@ -267,6 +267,8 @@ class CurrentData:
         df = additional_pipelines.standings_data(
             season_list=self.season, league_list=league_list
         )
+        print("Debug")
+        print(league_list)
         df = add_data.add_updated_at_col(df=df)
         df = df[reordered_col.standings_col]
         SQL.standings_data_delete(name=name, current_season=self.season[0])

@@ -43,4 +43,5 @@ def current_data_update():
 
 
 if "__main__" == __name__:
-    current_data_update()
+    historical_data_load()
+    # pass
