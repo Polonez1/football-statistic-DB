@@ -19,5 +19,24 @@ def current_data():
     main.current_data_update()
 
 
+@click.command(name="update_teams")
+def update_teams():
+    main.update_teams()
+    print("Ok")
+
+
+@click.command()
+def hello():
+    print("Hello, World!")
+
+
+@click.group()
+def cli():
+    pass
+
+
+cli.add_command(hello)
+cli.add_command(update_teams)
+
 if __name__ == "__main__":
-    historical_data()
+    cli()
