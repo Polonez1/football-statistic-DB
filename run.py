@@ -9,13 +9,13 @@ def seasonal_data():
 
 @click.command(name="historical_data")
 def historical_data():
-    main.update_teams()
+    # main.update_teams()
     main.historical_data_load()
 
 
 @click.command(name="current")
 def current_data():
-    main.update_teams()
+    # main.update_teams()
     main.current_data_update()
 
 
