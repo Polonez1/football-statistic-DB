@@ -244,9 +244,12 @@ class HistoricalData:
             tracked_football_seasons=self.season,
         )
         df = additional_pipelines.injuries_by_fixture_data(fixtures_list=fixtures_list)
-        df = add_data.add_updated_at_col(df=df)
-        df = df[reordered_col.injuries_fixtures_col]
-        SQL.data_loader(name=name, df=df, truncate=False)
+        try:
+            df = add_data.add_updated_at_col(df=df)
+            df = df[reordered_col.injuries_fixtures_col]
+            SQL.data_loader(name=name, df=df, truncate=False)
+        except KeyError:
+            print("Empty data")
 
         return df
 

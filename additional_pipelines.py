@@ -368,5 +368,6 @@ def injuries_by_fixture_data(fixtures_list: list) -> pd.DataFrame:
             print(f"limited request {counter}: sleep 60s")
             time.sleep(60)
 
-    df = pd.concat(full_data)
+    df: pd.DataFrame = pd.concat(full_data)
+
     return df

@@ -35,8 +35,10 @@ def cli():
     pass
 
 
-cli.add_command(hello)
 cli.add_command(update_teams)
+cli.add_command(seasonal_data)
+cli.add_command(current_data)
+cli.add_command(historical_data)
 
 if __name__ == "__main__":
     cli()

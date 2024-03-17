@@ -18,14 +18,14 @@ def update_teams():
 
 def historical_data_load():
     historical = HistoricalData()
-    standings = historical.load_standings_data()
-    team_statistic = historical.load_teams_statistic_data()
-    fixtures = historical.load_fixtures_data()
-    fixtures_event = historical.load_fixtures_event_data()
-
-    fixtures_stats = historical.load_fixtures_stats_data()
-    player_fixtures = historical.load_player_by_fixture_data()
-    lineups = historical.load_lineups_data()
+    # standings = historical.load_standings_data()
+    # team_statistic = historical.load_teams_statistic_data()
+    # fixtures = historical.load_fixtures_data()
+    # fixtures_event = historical.load_fixtures_event_data()
+    #
+    # fixtures_stats = historical.load_fixtures_stats_data()
+    # player_fixtures = historical.load_player_by_fixture_data()
+    # lineups = historical.load_lineups_data()
     injuries = historical.load_injuries_by_fixtures()
 
 
